@@ -32,3 +32,44 @@ stages:
         tags: |
           $(tag)
           latest
+    - task: PublishPipelineArtifact@1
+      inputs:
+        targetPath: '$(Pipeline.Workspace)'
+        artifact: 'manifests'
+        publishLocation: 'pipeline'
+
+- stage: deploy
+  displayName: deploy to build
+  dependsOn: Build
+  variables:
+    acrsecret: kube2
+  jobs:
+  - job: deploy
+    displayName: deploy to aks
+    pool:
+      name: kube2
+      demands:
+       - agent.name -equals kube2
+    steps:
+    - task: DownloadPipelineArtifact@2
+      inputs:
+        buildType: 'current'
+        artifactName: 'manifests'
+        targetPath: '$(Pipeline.Workspace)/manifests'
+    - task: KubernetesManifest@0
+      inputs:
+        action: 'createSecret'
+        kubernetesServiceConnection: 'dsfdemocluster'
+        namespace: 'manifests'
+        secretType: 'dockerRegistry'
+        secretName: '$(acrsecret)'
+        dockerRegistryEndpoint: 'dsfdemoregistry'
+    - task: KubernetesManifest@0
+      inputs:
+        action: 'deploy'
+        kubernetesServiceConnection: 'dsfdemocluster'
+        namespace: 'default'
+        manifests:
+          $(Pipeline.Workspace)/manifests/Deployment.yaml
+          $(Pipeline.Workspace)/manifests/Service.Yaml
+        
