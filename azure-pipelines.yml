@@ -1,0 +1,34 @@
+# Docker
+# Build a Docker image
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+- main
+
+resources:
+- repo: self
+
+variables:
+  imageRepo: sampleapp
+  tag: '$(Build.BuildId)'
+
+stages:
+- stage: Build
+  displayName: Build image
+  jobs:
+  - job: Build
+    displayName: Build
+    pool:
+      name: kube2
+      demands:
+       - agent.name -equals kube2
+    steps:
+    - task: Docker@2
+      inputs:
+        containerRegistry: 'dsfdemoregistry'
+        repository: '$(imageRepo)'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/Dockerfile.txt'
+        tags: |
+          $(tag)
+          latest
