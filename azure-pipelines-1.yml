@@ -28,8 +28,8 @@ stages:
       inputs:
         containerRegistry: 'dockeracr'
         repository: '$(imageRepo)'
-        command: 'build'
-        Dockerfile: '**/Dockerfile'
+        command: 'buildAndPush'
+        Dockerfile: '$(Build.SourcesDirectory)/Dockerfile.txt'
         tags: |
           $(tag)
           latest
